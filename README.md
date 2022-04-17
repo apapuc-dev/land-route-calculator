@@ -25,20 +25,30 @@ and calculate the route by utilizing individual countries border information.
 
 ## Solution
 
-The route is calculated using a backtracking recursive algorithm.
+The route is calculated using a recursive backtracking algorithm.
+
+The algorithm starts with 2 sets: 
+- **visitedCountries** - a sets of analyzed countries (empty on first call)
+- **startWithCountries** - a sets of countries to start the search with (contains origin country on first call).
+
+On each stage a set of unvisited border countries is created and a next call is done with this set, until the 
+destination is found and returned.
+
+After reaching the destination it builds the route list in reverse order (from destination to origin), by adding each 
+country on the top of the list. 
+
 
 ```java
 /**
  * Calculates and returns the route from any country in {@code startWithCountries} to {@code destination}.
  *
- * @param analyzedCountries the set of countries which were already analyzed.
+ * @param visitedCountries the set of countries which were already analyzed.
  * @param startWithCountries the set of countries to start with to find a route to the {@code destination}
  * @param destination the destination country for the calculated route
- * @return a list of countries needed to cross in order to reach the {@code destination} country. The returned list includes
- * the destination country, but not the countries in {@code startWithCountries}. If there is no land crossing, a null
- * will be returned.
+ * @return a list of countries needed to cross in order to reach the {@code destination} country. If there is no land
+ * crossing, a null will be returned.
  */
-private LinkedList<String> findRouteRecursive(Set<String> analyzedCountries, Set<String> startWithCountries, String destination) {
+private LinkedList<String> findRouteRecursive(Set<String> visitedCountries, Set<String> startWithCountries, String destination) {
 
     if (CollectionUtils.isEmpty(startWithCountries)) {
         return null;
@@ -52,21 +62,21 @@ private LinkedList<String> findRouteRecursive(Set<String> analyzedCountries, Set
     }
 
     Set<String> newBorders = startWithCountries.stream()
-            .flatMap(country -> bordersByCountry.get(country).stream())
-            .filter(country -> !analyzedCountries.contains(country))
-            .collect(Collectors.toSet());
+        .flatMap(country -> bordersByCountry.get(country).stream())
+        .filter(country -> !visitedCountries.contains(country))
+        .collect(Collectors.toSet());
 
-    analyzedCountries.addAll(newBorders);
+    visitedCountries.addAll(newBorders);
 
-    LinkedList<String> localRoute = findRouteRecursive(analyzedCountries, newBorders, destination);
+    LinkedList<String> localRoute = findRouteRecursive(visitedCountries, newBorders, destination);
 
     if (!CollectionUtils.isEmpty(localRoute)) {
         String firstCountry = localRoute.getFirst();
 
         bordersByCountry.get(firstCountry).stream()
-                .filter(startWithCountries::contains)
-                .findFirst()
-                .ifPresent(localRoute::addFirst);
+            .filter(startWithCountries::contains)
+            .findFirst()
+            .ifPresent(localRoute::addFirst);
 
         return localRoute;
     }

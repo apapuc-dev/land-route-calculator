@@ -60,51 +60,50 @@ public class LandRouteService {
         return findRouteRecursive(new HashSet<>(), startWithCountries, destination);
     }
 
-/**
- * Calculates and returns the route from any country in {@code startWithCountries} to {@code destination}.
- *
- * @param analyzedCountries the set of countries which were already analyzed.
- * @param startWithCountries the set of countries to start with to find a route to the {@code destination}
- * @param destination the destination country for the calculated route
- * @return a list of countries needed to cross in order to reach the {@code destination} country. The returned list includes
- * the destination country, but not the countries in {@code startWithCountries}. If there is no land crossing, a null
- * will be returned.
- */
-private LinkedList<String> findRouteRecursive(Set<String> analyzedCountries, Set<String> startWithCountries, String destination) {
+    /**
+     * Calculates and returns the route from any country in {@code startWithCountries} to {@code destination}.
+     *
+     * @param visitedCountries the set of countries which were already analyzed.
+     * @param startWithCountries the set of countries to start with to find a route to the {@code destination}
+     * @param destination the destination country for the calculated route
+     * @return a list of countries needed to cross in order to reach the {@code destination} country. If there is no land
+     * crossing, a null will be returned.
+     */
+    private LinkedList<String> findRouteRecursive(Set<String> visitedCountries, Set<String> startWithCountries, String destination) {
 
-    if (CollectionUtils.isEmpty(startWithCountries)) {
+        if (CollectionUtils.isEmpty(startWithCountries)) {
+            return null;
+        }
+
+        if (startWithCountries.contains(destination)) {
+            LinkedList<String> route = new LinkedList<>();
+
+            route.add(destination);
+            return route;
+        }
+
+        Set<String> newBorders = startWithCountries.stream()
+                .flatMap(country -> bordersByCountry.get(country).stream())
+                .filter(country -> !visitedCountries.contains(country))
+                .collect(Collectors.toSet());
+
+        visitedCountries.addAll(newBorders);
+
+        LinkedList<String> localRoute = findRouteRecursive(visitedCountries, newBorders, destination);
+
+        if (!CollectionUtils.isEmpty(localRoute)) {
+            String firstCountry = localRoute.getFirst();
+
+            bordersByCountry.get(firstCountry).stream()
+                    .filter(startWithCountries::contains)
+                    .findFirst()
+                    .ifPresent(localRoute::addFirst);
+
+            return localRoute;
+        }
+
         return null;
     }
-
-    if (startWithCountries.contains(destination)) {
-        LinkedList<String> route = new LinkedList<>();
-
-        route.add(destination);
-        return route;
-    }
-
-    Set<String> newBorders = startWithCountries.stream()
-            .flatMap(country -> bordersByCountry.get(country).stream())
-            .filter(country -> !analyzedCountries.contains(country))
-            .collect(Collectors.toSet());
-
-    analyzedCountries.addAll(newBorders);
-
-    LinkedList<String> localRoute = findRouteRecursive(analyzedCountries, newBorders, destination);
-
-    if (!CollectionUtils.isEmpty(localRoute)) {
-        String firstCountry = localRoute.getFirst();
-
-        bordersByCountry.get(firstCountry).stream()
-                .filter(startWithCountries::contains)
-                .findFirst()
-                .ifPresent(localRoute::addFirst);
-
-        return localRoute;
-    }
-
-    return null;
-}
 
     private void validateCountryCode(String countryCode) throws CountryCodeNotFoundException {
         if (!bordersByCountry.containsKey(countryCode)) {
