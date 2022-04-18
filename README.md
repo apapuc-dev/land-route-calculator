@@ -25,7 +25,7 @@ and calculate the route by utilizing individual countries border information.
 
 ## Solution
 
-The route is calculated using two different algorithms:
+The route is searched using two different algorithms:
 - Depth First Search (DFS)
 - Breadth First Search (BFS) 
 
