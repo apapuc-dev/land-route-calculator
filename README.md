@@ -25,62 +25,51 @@ and calculate the route by utilizing individual countries border information.
 
 ## Solution
 
-The route is calculated using a recursive backtracking algorithm.
+The route is calculated using two different algorithms:
+- Depth First Search (DFS)
+- Breadth First Search (BFS) 
 
-The algorithm starts with 2 sets: 
-- **visitedCountries** - a sets of analyzed countries (empty on first call)
-- **startWithCountries** - a sets of countries to start the search with (contains origin country on first call).
-
-On each stage a set of unvisited border countries is created and a next call is done with this set, until the 
-destination is found and returned.
-
-After reaching the destination it builds the route list in reverse order (from destination to origin), by adding each 
-country on the top of the list. 
+By default, the application uses the DFS implementation, which is faster than BFS. For running the application with the 
+BFS implementation, see the Usage section below.
 
 
 ```java
 /**
- * Calculates and returns the route from any country in {@code startWithCountries} to {@code destination}.
+ * Search and returns the route from any country in {@code startWithCountries} to {@code destination}using a Depth 
+ * First Search algorithm.
  *
  * @param visitedCountries the set of countries which were already analyzed.
- * @param startWithCountries the set of countries to start with to find a route to the {@code destination}
- * @param destination the destination country for the calculated route
+ * @param origin the origin country to start with
+ * @param destination the destination country for the searched route
  * @return a list of countries needed to cross in order to reach the {@code destination} country. If there is no land
  * crossing, a null will be returned.
  */
-private LinkedList<String> findRouteRecursive(Set<String> visitedCountries, Set<String> startWithCountries, String destination) {
-
-    if (CollectionUtils.isEmpty(startWithCountries)) {
-        return null;
-    }
-
-    if (startWithCountries.contains(destination)) {
+LinkedList<String> findRouteDFS(Set<String> visitedCountries, String origin, String destination) {
+    
+    if (origin.equals(destination)) {
         LinkedList<String> route = new LinkedList<>();
-
+        
         route.add(destination);
         return route;
     }
-
-    Set<String> newBorders = startWithCountries.stream()
-        .flatMap(country -> bordersByCountry.get(country).stream())
-        .filter(country -> !visitedCountries.contains(country))
-        .collect(Collectors.toSet());
-
-    visitedCountries.addAll(newBorders);
-
-    LinkedList<String> localRoute = findRouteRecursive(visitedCountries, newBorders, destination);
-
-    if (!CollectionUtils.isEmpty(localRoute)) {
-        String firstCountry = localRoute.getFirst();
-
-        bordersByCountry.get(firstCountry).stream()
-            .filter(startWithCountries::contains)
-            .findFirst()
-            .ifPresent(localRoute::addFirst);
-
-        return localRoute;
+    
+    Set<String> borderCountries = bordersByCountry.get(origin);
+    
+    for (String borderCountry : borderCountries) {
+        
+        if (visitedCountries.contains(borderCountry)) {
+            continue;
+        }
+        
+        visitedCountries.add(borderCountry);
+        
+        LinkedList<String> localRoute = findRouteDFS(visitedCountries, borderCountry, destination);
+        
+        if (!CollectionUtils.isEmpty(localRoute)) {
+            localRoute.addFirst(origin);
+            return localRoute;
+        }
     }
-
     return null;
 }
 ```
@@ -90,10 +79,14 @@ private LinkedList<String> findRouteRecursive(Set<String> visitedCountries, Set<
 
 1. Run LandRouteCalculatorApplication using Java 11 or higher.
 
-   Or, you can also use Maven:
+   Or, you can also use Maven. For DFS algorithm:
    ```
    ./mvnw spring-boot:run
-   ````
+   ```
+   For BFS:
+   ```
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=bfs
+   ```
 
 2. Send a GET request to localhost:{port}/routing/{origin}/{destination}
    ```

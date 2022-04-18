@@ -16,6 +16,25 @@
 	<properties>
 		<java.version>11</java.version>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>dfs</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<spring.profiles.active>dfs</spring.profiles.active>
+			</properties>
+		</profile>
+		<profile>
+			<id>bfs</id>
+			<properties>
+				<spring.profiles.active>bfs</spring.profiles.active>
+			</properties>
+		</profile>
+	</profiles>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -31,9 +50,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+        </dependency>
     </dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
